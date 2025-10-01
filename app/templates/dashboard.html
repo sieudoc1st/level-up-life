@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- User Stats Section -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card bg-gradient-primary text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h2 class="mb-0">
+                            <i class="fas fa-crown me-2"></i>{{ current_user.username }}
+                        </h2>
+                        <p class="mb-2">Level {{ current_user.level }} Adventurer</p>
+                        
+                        <!-- EXP Progress Bar -->
+                        <div class="mb-2">
+                            <small>EXP: {{ current_user.exp }} / {{ current_user.level * 100 }}</small>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" data-progress="{{ stats.exp_progress }}" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <small>{{ stats.exp_to_next }} EXP để lên cấp {{ current_user.level + 1 }}</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-circle fa-4x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="row">
+            <div class="col-6 mb-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h4>{{ stats.today_completions }}</h4>
+                        <small>Hôm nay</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 mb-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h4>{{ stats.active_quests }}</h4>
+                        <small>Nhiệm vụ</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Character Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-dumbbell fa-2x text-danger mb-2"></i>
+                <h5>{{ current_user.strength }}</h5>
+                <small class="text-muted">Thể lực</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-brain fa-2x text-primary mb-2"></i>
+                <h5>{{ current_user.intelligence }}</h5>
+                <small class="text-muted">Trí tuệ</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-heart fa-2x text-success mb-2"></i>
+                <h5>{{ current_user.endurance }}</h5>
+                <small class="text-muted">Sức bền</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-palette fa-2x text-warning mb-2"></i>
+                <h5>{{ current_user.creativity }}</h5>
+                <small class="text-muted">Sáng tạo</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quests Section -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Nhiệm vụ của bạn</h5>
+                <a href="{{ url_for('main.create_quest') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>Tạo nhiệm vụ
+                </a>
+            </div>
+            <div class="card-body">
+                {% if quests %}
+                    {% for quest in quests %}
+                    <div class="quest-item mb-3 p-3 border rounded {{ 'bg-success bg-opacity-10' if quest.completed_today else '' }}">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h6 class="mb-1">
+                                    {% if quest.completed_today %}
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-circle text-muted me-2"></i>
+                                    {% endif %}
+                                    {{ quest.title }}
+                                </h6>
+                                
+                                {% if quest.description %}
+                                    <p class="text-muted small mb-2">{{ quest.description }}</p>
+                                {% endif %}
+                                
+                                <small class="text-muted">
+                                    <i class="fas fa-star me-1"></i>{{ quest.exp_reward }} EXP
+                                    {% if quest.strength_reward %} | <i class="fas fa-dumbbell me-1"></i>+{{ quest.strength_reward }} STR{% endif %}
+                                    {% if quest.intelligence_reward %} | <i class="fas fa-brain me-1"></i>+{{ quest.intelligence_reward }} INT{% endif %}
+                                    {% if quest.endurance_reward %} | <i class="fas fa-heart me-1"></i>+{{ quest.endurance_reward }} END{% endif %}
+                                    {% if quest.creativity_reward %} | <i class="fas fa-palette me-1"></i>+{{ quest.creativity_reward }} CRE{% endif %}
+                                </small>
+                            </div>
+                            
+                            <div class="col-auto">
+                                {% if quest.completed_today %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Hoàn thành
+                                    </span>
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('main.complete_quest', quest_id=quest.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Hoàn thành nhiệm vụ này?')">
+                                            <i class="fas fa-check me-1"></i>Hoàn thành
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                
+                                <!-- Quest Actions Dropdown -->
+                                <div class="btn-group ms-2" role="group">
+                                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <form method="POST" action="{{ url_for('main.toggle_quest', quest_id=quest.id) }}" class="d-inline">
+                                                <button type="submit" class="dropdown-item">
+                                                    {% if quest.is_active %}
+                                                        <i class="fas fa-pause me-2"></i>Tạm dừng
+                                                    {% else %}
+                                                        <i class="fas fa-play me-2"></i>Kích hoạt
+                                                    {% endif %}
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <form method="POST" action="{{ url_for('main.delete_quest', quest_id=quest.id) }}" class="d-inline">
+                                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Bạn có chắc muốn xóa nhiệm vụ này?')">
+                                                    <i class="fas fa-trash me-2"></i>Xóa
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-tasks fa-4x text-muted mb-3"></i>
+                        <h5>Chưa có nhiệm vụ nào</h5>
+                        <p class="text-muted">Hãy tạo nhiệm vụ đầu tiên để bắt đầu hành trình level up!</p>
+                        <a href="{{ url_for('main.create_quest') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Tạo nhiệm vụ đầu tiên
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Daily Summary -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Tổng kết hôm nay</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Nhiệm vụ hoàn thành:</span>
+                    <strong>{{ stats.today_completions }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tổng nhiệm vụ:</span>
+                    <strong>{{ stats.total_completions }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Nhiệm vụ đang hoạt động:</span>
+                    <strong>{{ stats.active_quests }}</strong>
+                </div>
+                
+                <hr>
+                
+                <div class="text-center">
+                    <small class="text-muted">
+                        Gia nhập vào {{ current_user.created_at.strftime('%d/%m/%Y') }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Tips -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Mẹo</h6>
+            </div>
+            <div class="card-body">
+                <small>
+                    💡 Hoàn thành nhiệm vụ mỗi ngày để tích lũy EXP và nâng cấp!<br><br>
+                    🎯 Tạo nhiệm vụ phù hợp với mục tiêu phát triển bản thân.<br><br>
+                    ⚡ Mỗi loại nhiệm vụ sẽ giúp bạn phát triển các kỹ năng khác nhau.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

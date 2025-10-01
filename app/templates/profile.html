@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <!-- User Profile Card -->
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-user-circle fa-5x text-primary mb-3"></i>
+                <h4>{{ current_user.username }}</h4>
+                <p class="text-muted">Level {{ current_user.level }} Adventurer</p>
+                
+                <div class="mb-3">
+                    <small class="text-muted">EXP Progress</small>
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" data-progress="{{ current_user.exp_progress_percentage() }}" style="width: 0%"></div>
+                    </div>
+                    <small>{{ current_user.exp }} / {{ current_user.level * 100 }} EXP</small>
+                </div>
+                
+                <p class="text-muted">
+                    <i class="fas fa-envelope me-2"></i>{{ current_user.email }}
+                </p>
+                <p class="text-muted">
+                    <i class="fas fa-calendar me-2"></i>Tham gia {{ current_user.created_at.strftime('%d/%m/%Y') }}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Stats Card -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Thống kê</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tổng hoàn thành:</span>
+                    <strong>{{ stats.total_completions }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>7 ngày qua:</span>
+                    <strong>{{ stats.week_completions }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>30 ngày qua:</span>
+                    <strong>{{ stats.month_completions }}</strong>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tổng nhiệm vụ:</span>
+                    <strong>{{ stats.total_quests }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Đang hoạt động:</span>
+                    <strong>{{ stats.active_quests }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <!-- Character Stats -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-user-ninja me-2"></i>Chỉ số nhân vật</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="stat-item p-3 border rounded">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-dumbbell fa-2x text-danger me-3"></i>
+                                <div>
+                                    <h4 class="mb-0">{{ current_user.strength }}</h4>
+                                    <small class="text-muted">Thể lực (Strength)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="stat-item p-3 border rounded">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-brain fa-2x text-primary me-3"></i>
+                                <div>
+                                    <h4 class="mb-0">{{ current_user.intelligence }}</h4>
+                                    <small class="text-muted">Trí tuệ (Intelligence)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="stat-item p-3 border rounded">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-heart fa-2x text-success me-3"></i>
+                                <div>
+                                    <h4 class="mb-0">{{ current_user.endurance }}</h4>
+                                    <small class="text-muted">Sức bền (Endurance)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="stat-item p-3 border rounded">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-palette fa-2x text-warning me-3"></i>
+                                <div>
+                                    <h4 class="mb-0">{{ current_user.creativity }}</h4>
+                                    <small class="text-muted">Sáng tạo (Creativity)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Achievements Section (Future feature) -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Thành tích</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    {% if stats.total_completions >= 1 %}
+                    <div class="col-md-4 mb-3">
+                        <div class="achievement p-3 border rounded bg-light">
+                            <i class="fas fa-baby fa-2x text-success mb-2"></i>
+                            <h6>Bước đầu tiên</h6>
+                            <small>Hoàn thành nhiệm vụ đầu tiên</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if stats.total_completions >= 10 %}
+                    <div class="col-md-4 mb-3">
+                        <div class="achievement p-3 border rounded bg-light">
+                            <i class="fas fa-fire fa-2x text-warning mb-2"></i>
+                            <h6>Bền bỉ</h6>
+                            <small>Hoàn thành 10 nhiệm vụ</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if current_user.level >= 5 %}
+                    <div class="col-md-4 mb-3">
+                        <div class="achievement p-3 border rounded bg-light">
+                            <i class="fas fa-star fa-2x text-primary mb-2"></i>
+                            <h6>Thăng cấp</h6>
+                            <small>Đạt Level 5</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if stats.total_completions < 1 %}
+                    <div class="col-12">
+                        <p class="text-muted">Hoàn thành nhiệm vụ để mở khóa thành tích!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
