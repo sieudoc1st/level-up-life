@@ -89,21 +89,28 @@ def index():
 def dashboard():
     # Get active quests for current user
     quests = Quest.query.filter_by(user_id=current_user.id, is_active=True).order_by(Quest.created_at.desc()).all()
-    
-    # Add completion status to each quest
+
+    # Separate quests into pending and completed
+    pending_quests = []
+    completed_quests = []
+
     for quest in quests:
         quest.completed_today = quest.is_completed_today()
-    
+        if quest.completed_today:
+            completed_quests.append(quest)
+        else:
+            pending_quests.append(quest)
+
     # Get today's completed quests count
     today = date.today()
     today_completions = Completion.query.filter_by(
         user_id=current_user.id,
         completed_date=today
     ).count()
-    
+
     # Get total completions
     total_completions = Completion.query.filter_by(user_id=current_user.id).count()
-    
+
     stats = {
         'today_completions': today_completions,
         'total_completions': total_completions,
@@ -111,10 +118,11 @@ def dashboard():
         'exp_to_next': current_user.exp_to_next_level(),
         'exp_progress': current_user.exp_progress_percentage()
     }
-    
-    return render_template('dashboard.html', 
-                         title='Dashboard', 
-                         quests=quests, 
+
+    return render_template('dashboard.html',
+                         title='Dashboard',
+                         pending_quests=pending_quests,
+                         completed_quests=completed_quests,
                          stats=stats)
 
 @main.route('/create_quest', methods=['GET', 'POST'])
@@ -156,50 +164,56 @@ def create_quest():
 @main.route('/complete_quest/<int:quest_id>', methods=['POST'])
 @login_required
 def complete_quest(quest_id):
-    quest = Quest.query.get_or_404(quest_id)
-    
-    # Verify quest belongs to current user
-    if quest.user_id != current_user.id:
-        flash('Bạn không có quyền hoàn thành nhiệm vụ này!', 'danger')
+    try:
+        quest = Quest.query.get_or_404(quest_id)
+
+        # Verify quest belongs to current user
+        if quest.user_id != current_user.id:
+            flash('Bạn không có quyền hoàn thành nhiệm vụ này!', 'danger')
+            return redirect(url_for('main.dashboard'))
+
+        # Check if already completed today
+        if quest.is_completed_today():
+            flash('Nhiệm vụ này đã được hoàn thành hôm nay rồi!', 'warning')
+            return redirect(url_for('main.dashboard'))
+
+        # Create completion record
+        completion = Completion(
+            user_id=current_user.id,
+            quest_id=quest.id,
+            exp_earned=quest.exp_reward,
+            strength_earned=quest.strength_reward,
+            intelligence_earned=quest.intelligence_reward,
+            endurance_earned=quest.endurance_reward,
+            creativity_earned=quest.creativity_reward
+        )
+
+        # Update user stats
+        current_user.exp += quest.exp_reward
+        current_user.strength += quest.strength_reward
+        current_user.intelligence += quest.intelligence_reward
+        current_user.endurance += quest.endurance_reward
+        current_user.creativity += quest.creativity_reward
+
+        # Check for level up
+        old_level = current_user.level
+        new_level = current_user.check_and_level_up()
+
+        db.session.add(completion)
+        db.session.commit()
+
+        # Flash appropriate message
+        if new_level > old_level:
+            flash(f'🎉 CHÚC MỪNG! Bạn đã lên cấp {new_level}! Nhiệm vụ "{quest.title}" hoàn thành (+{quest.exp_reward} EXP)', 'success')
+        else:
+            flash(f'✅ Nhiệm vụ "{quest.title}" hoàn thành! (+{quest.exp_reward} EXP)', 'success')
+
         return redirect(url_for('main.dashboard'))
-    
-    # Check if already completed today
-    if quest.is_completed_today():
-        flash('Nhiệm vụ này đã được hoàn thành hôm nay rồi!', 'warning')
+
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra khi hoàn thành nhiệm vụ. Vui lòng thử lại!', 'danger')
         return redirect(url_for('main.dashboard'))
-    
-    # Create completion record
-    completion = Completion(
-        user_id=current_user.id,
-        quest_id=quest.id,
-        exp_earned=quest.exp_reward,
-        strength_earned=quest.strength_reward,
-        intelligence_earned=quest.intelligence_reward,
-        endurance_earned=quest.endurance_reward,
-        creativity_earned=quest.creativity_reward
-    )
-    
-    # Update user stats
-    current_user.exp += quest.exp_reward
-    current_user.strength += quest.strength_reward
-    current_user.intelligence += quest.intelligence_reward
-    current_user.endurance += quest.endurance_reward
-    current_user.creativity += quest.creativity_reward
-    
-    # Check for level up
-    old_level = current_user.level
-    new_level = current_user.check_and_level_up()
-    
-    db.session.add(completion)
-    db.session.commit()
-    
-    # Flash appropriate message
-    if new_level > old_level:
-        flash(f'🎉 CHÚC MỪNG! Bạn đã lên cấp {new_level}! Nhiệm vụ "{quest.title}" hoàn thành (+{quest.exp_reward} EXP)', 'success')
-    else:
-        flash(f'✅ Nhiệm vụ "{quest.title}" hoàn thành! (+{quest.exp_reward} EXP)', 'success')
-    
-    return redirect(url_for('main.dashboard'))
 
 @main.route('/toggle_quest/<int:quest_id>', methods=['POST'])
 @login_required

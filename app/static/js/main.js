@@ -34,16 +34,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add loading state to buttons
     const submitButtons = document.querySelectorAll('button[type="submit"]');
     submitButtons.forEach(function(button) {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function(e) {
+            // Prevent double submission
+            if (this.disabled) {
+                e.preventDefault();
+                return false;
+            }
+
             const originalText = this.innerHTML;
             this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...';
             this.disabled = true;
-            
-            // Re-enable after 3 seconds (failsafe)
+
+            // Re-enable after 5 seconds (failsafe)
             setTimeout(() => {
                 this.innerHTML = originalText;
                 this.disabled = false;
-            }, 3000);
+            }, 5000);
         });
     });
 

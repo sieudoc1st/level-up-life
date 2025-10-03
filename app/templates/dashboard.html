@@ -96,32 +96,29 @@
 <!-- Quests Section -->
 <div class="row">
     <div class="col-lg-8">
+        <!-- Pending Quests -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Nhiệm vụ của bạn</h5>
+                <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Nhiệm vụ đang chờ</h5>
                 <a href="{{ url_for('main.create_quest') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus me-1"></i>Tạo nhiệm vụ
                 </a>
             </div>
             <div class="card-body">
-                {% if quests %}
-                    {% for quest in quests %}
-                    <div class="quest-item mb-3 p-3 border rounded {{ 'bg-success bg-opacity-10' if quest.completed_today else '' }}">
+                {% if pending_quests %}
+                    {% for quest in pending_quests %}
+                    <div class="quest-item mb-3 p-3 border rounded">
                         <div class="row align-items-center">
                             <div class="col">
                                 <h6 class="mb-1">
-                                    {% if quest.completed_today %}
-                                        <i class="fas fa-check-circle text-success me-2"></i>
-                                    {% else %}
-                                        <i class="fas fa-circle text-muted me-2"></i>
-                                    {% endif %}
+                                    <i class="fas fa-circle text-muted me-2"></i>
                                     {{ quest.title }}
                                 </h6>
-                                
+
                                 {% if quest.description %}
                                     <p class="text-muted small mb-2">{{ quest.description }}</p>
                                 {% endif %}
-                                
+
                                 <small class="text-muted">
                                     <i class="fas fa-star me-1"></i>{{ quest.exp_reward }} EXP
                                     {% if quest.strength_reward %} | <i class="fas fa-dumbbell me-1"></i>+{{ quest.strength_reward }} STR{% endif %}
@@ -130,20 +127,14 @@
                                     {% if quest.creativity_reward %} | <i class="fas fa-palette me-1"></i>+{{ quest.creativity_reward }} CRE{% endif %}
                                 </small>
                             </div>
-                            
+
                             <div class="col-auto">
-                                {% if quest.completed_today %}
-                                    <span class="badge bg-success">
+                                <form method="POST" action="{{ url_for('main.complete_quest', quest_id=quest.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Hoàn thành nhiệm vụ này?')">
                                         <i class="fas fa-check me-1"></i>Hoàn thành
-                                    </span>
-                                {% else %}
-                                    <form method="POST" action="{{ url_for('main.complete_quest', quest_id=quest.id) }}" class="d-inline">
-                                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Hoàn thành nhiệm vụ này?')">
-                                            <i class="fas fa-check me-1"></i>Hoàn thành
-                                        </button>
-                                    </form>
-                                {% endif %}
-                                
+                                    </button>
+                                </form>
+
                                 <!-- Quest Actions Dropdown -->
                                 <div class="btn-group ms-2" role="group">
                                     <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
@@ -153,11 +144,7 @@
                                         <li>
                                             <form method="POST" action="{{ url_for('main.toggle_quest', quest_id=quest.id) }}" class="d-inline">
                                                 <button type="submit" class="dropdown-item">
-                                                    {% if quest.is_active %}
-                                                        <i class="fas fa-pause me-2"></i>Tạm dừng
-                                                    {% else %}
-                                                        <i class="fas fa-play me-2"></i>Kích hoạt
-                                                    {% endif %}
+                                                    <i class="fas fa-pause me-2"></i>Tạm dừng
                                                 </button>
                                             </form>
                                         </li>
@@ -176,17 +163,94 @@
                     </div>
                     {% endfor %}
                 {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-tasks fa-4x text-muted mb-3"></i>
-                        <h5>Chưa có nhiệm vụ nào</h5>
-                        <p class="text-muted">Hãy tạo nhiệm vụ đầu tiên để bắt đầu hành trình level up!</p>
-                        <a href="{{ url_for('main.create_quest') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i>Tạo nhiệm vụ đầu tiên
-                        </a>
+                    <div class="text-center py-3">
+                        <i class="fas fa-check-circle fa-3x text-success mb-2"></i>
+                        <p class="text-muted mb-0">Tất cả nhiệm vụ hôm nay đã hoàn thành!</p>
                     </div>
                 {% endif %}
             </div>
         </div>
+
+        <!-- Completed Quests -->
+        {% if completed_quests %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-check-circle text-success me-2"></i>Đã hoàn thành hôm nay</h5>
+            </div>
+            <div class="card-body">
+                {% for quest in completed_quests %}
+                <div class="quest-item mb-3 p-3 border rounded bg-success bg-opacity-10">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="mb-1">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                {{ quest.title }}
+                            </h6>
+
+                            {% if quest.description %}
+                                <p class="text-muted small mb-2">{{ quest.description }}</p>
+                            {% endif %}
+
+                            <small class="text-muted">
+                                <i class="fas fa-star me-1"></i>{{ quest.exp_reward }} EXP
+                                {% if quest.strength_reward %} | <i class="fas fa-dumbbell me-1"></i>+{{ quest.strength_reward }} STR{% endif %}
+                                {% if quest.intelligence_reward %} | <i class="fas fa-brain me-1"></i>+{{ quest.intelligence_reward }} INT{% endif %}
+                                {% if quest.endurance_reward %} | <i class="fas fa-heart me-1"></i>+{{ quest.endurance_reward }} END{% endif %}
+                                {% if quest.creativity_reward %} | <i class="fas fa-palette me-1"></i>+{{ quest.creativity_reward }} CRE{% endif %}
+                            </small>
+                        </div>
+
+                        <div class="col-auto">
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>Hoàn thành
+                            </span>
+
+                            <!-- Quest Actions Dropdown -->
+                            <div class="btn-group ms-2" role="group">
+                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <form method="POST" action="{{ url_for('main.toggle_quest', quest_id=quest.id) }}" class="d-inline">
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fas fa-pause me-2"></i>Tạm dừng
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('main.delete_quest', quest_id=quest.id) }}" class="d-inline">
+                                            <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Bạn có chắc muốn xóa nhiệm vụ này?')">
+                                                <i class="fas fa-trash me-2"></i>Xóa
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- No Quests Message -->
+        {% if not pending_quests and not completed_quests %}
+        <div class="card">
+            <div class="card-body">
+                <div class="text-center py-5">
+                    <i class="fas fa-tasks fa-4x text-muted mb-3"></i>
+                    <h5>Chưa có nhiệm vụ nào</h5>
+                    <p class="text-muted">Hãy tạo nhiệm vụ đầu tiên để bắt đầu hành trình level up!</p>
+                    <a href="{{ url_for('main.create_quest') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Tạo nhiệm vụ đầu tiên
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
     
     <!-- Daily Summary -->
